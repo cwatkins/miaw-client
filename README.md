@@ -44,7 +44,7 @@ const messageEntry = await client.conversations.messages.send(accessToken, conve
 });
 
 // Stream conversation events
-const stream = await client.events.stream(accessToken, {
+const eventStream = client.events.stream(accessToken, {
   lastEventId: '0',
   onEvent: (event) => {
     console.log('Received event:', event);
@@ -55,8 +55,8 @@ const stream = await client.events.stream(accessToken, {
 });
 
 // Later, when you need to clean up:
-if (stream) {
-  stream.close();
+if (eventStream) {
+  eventStream.close();
 }
 ```
 
@@ -164,7 +164,7 @@ interface ConversationEntry {
 const entry = await client.conversations.messages.send(token, conversationId, params);
 ```
 
-#### `typing.create(token, conversationId)` and `typing.delete(token, conversationId)`
+#### `typing.start(token, conversationId)` and `typing.stop(token, conversationId)`
 
 Manages typing indicators in a conversation.
 
@@ -175,7 +175,7 @@ const { success } = await client.conversations.typing.start(token, conversationI
 const { success } = await client.conversations.typing.stop(token, conversationId);
 ```
 
-#### `receipts.create(token, conversationId, params)`
+#### `receipts.send(token, conversationId, params)`
 
 Sends delivery or read receipts for messages.
 
@@ -188,7 +188,7 @@ interface ReceiptParams {
   }>;
 }
 
-const { success } = await client.conversations.receipts.create(token, conversationId, params);
+const { success } = await client.conversations.receipts.send(token, conversationId, params);
 ```
 
 #### `list(token, conversationId, params?)`
