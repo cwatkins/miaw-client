@@ -1,5 +1,5 @@
-import type { Logger } from '../SalesforceMessaging.js';
-import { createError } from '../utils/error.js';
+import type { Logger } from '../MessagingInAppWeb.js';
+import { makeRequest } from '../utils/request.js';
 
 /** Parameters for creating a new token */
 export interface TokenCreateParams {
@@ -21,7 +21,7 @@ export interface TokenResponse {
 }
 
 /**
- * Service class for managing authentication tokens with the Salesforce Messaging API.
+ * Service class for managing authentication tokens with the Messaging In-App and Web API.
  * Handles token creation, refresh, and management.
  */
 export class TokenService {
@@ -37,23 +37,23 @@ export class TokenService {
    * @param {TokenCreateParams} params - Token creation parameters
    * @returns {Promise<TokenResponse>} Promise containing the created token details
    */
-  async create(params: TokenCreateParams): Promise<TokenResponse> {
+  async create(params?: TokenCreateParams): Promise<TokenResponse> {
     const tokenType = this.isAuthenticatedTokenConfig(params) ? 'authenticated' : 'unauthenticated';
 
     this.logger.debug(`Creating ${tokenType} token`);
 
-    const response = await fetch(
+    const response = await makeRequest<Response>(
       `${this.baseUrl}/iamessage/api/v2/authorization/${tokenType}/access-token`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           orgId: this.orgId,
           esDeveloperName: this.developerName,
           capabilitiesVersion: params?.capabilitiesVersion || '1',
           platform: params?.platform || 'Web',
           context: params?.context || {
-            appName: 'SalesforceMessagingClient',
+            appName: 'MessagingInAppWebClient',
             clientVersion: '1.0.0',
           },
           ...(params?.deviceId && { deviceId: params?.deviceId }),
@@ -61,24 +61,15 @@ export class TokenService {
           ...(params?.customerIdentityToken && {
             customerIdentityToken: params.customerIdentityToken,
           }),
-        }),
-      }
+        },
+      },
+      `tokens.create_${tokenType}_token`,
+      this.logger
     );
 
-    const responseData: unknown = await response.json();
-
-    if (!response.ok) {
-      const error = createError(
-        response.status,
-        `tokens.create_${tokenType}_token`
-      );
-      this.logger.error(`Token creation failed: ${error.message}`, error);
-      throw error;
-    }
-
-    const data = responseData as TokenResponse;
+    const responseData = await response.json() as TokenResponse;
     this.logger.info('Token created successfully');
-    return data;
+    return responseData;
   }
 
   /**
@@ -89,28 +80,19 @@ export class TokenService {
   async continue(token: string): Promise<TokenResponse> {
     this.logger.debug('Refreshing token');
 
-    const response = await fetch(
+    const response = await makeRequest<Response>(
       `${this.baseUrl}/iamessage/api/v2/authorization/continuation-access-token`,
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
+      'tokens.refresh_token',
+      this.logger
     );
 
-    const responseData: unknown = await response.json();
-
-    if (!response.ok) {
-      const error = createError(
-        response.status,
-        'tokens.refresh_token'
-      );
-      this.logger.error(`Token refresh failed: ${error.message}`, error);
-      throw error;
-    }
-
-    const data = responseData as TokenResponse;
+    const responseData = await response.json() as TokenResponse;
     this.logger.info('Token refreshed successfully');
-    return data;
+    return responseData;
   }
 
   /**
@@ -118,7 +100,10 @@ export class TokenService {
    * @param {TokenCreateParams} params - Token creation parameters
    * @returns {boolean} indicating if the configuration is for authenticated users
    */
-  private isAuthenticatedTokenConfig(params: TokenCreateParams): boolean {
+  private isAuthenticatedTokenConfig(params?: TokenCreateParams): boolean {
+    if (!params) {
+      return false;
+    }
     return (
       typeof params === 'object' &&
       params !== null &&

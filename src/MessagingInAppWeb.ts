@@ -1,8 +1,7 @@
 import { TokenService } from './services/TokenService.js';
-import { ConversationEntry, ConversationService, ConversationStatus, MessageParams, ReceiptParams } from './services/ConversationService.js';
+import { ConversationEntry, ConversationResponse, ConversationService, ConversationStatus, MessageParams, ReceiptParams } from './services/ConversationService.js';
 import { EventService, SSEOptions } from './services/EventService.js';
 import { EventSourceClient } from 'eventsource-client';
-import { ConversationEntryResponse } from './types/api.js';
 
 /**
  * Logger interface
@@ -15,9 +14,9 @@ export interface Logger {
 }
 
 /**
- * Salesforce Messaging configuration
+ * Messaging In-App and Web configuration
  */
-interface SalesforceMessagingConfig {
+interface MessagingInAppWebConfig {
   baseUrl: string;
   orgId: string;
   developerName: string;
@@ -27,21 +26,21 @@ interface SalesforceMessagingConfig {
 const REQUIRED_CONFIG = ['baseUrl', 'orgId', 'developerName'];
 
 /**
- * Salesforce Messaging Client
- * A Stripe-inspired API wrapper for Salesforce's Messaging for In-App and Web APIs.
+ * Messaging In-App and Web Client
+ * An API wrapper for Messaging for In-App and Web APIs.
  */
-export class SalesforceMessaging {
-  private config: SalesforceMessagingConfig;
+export class MessagingInAppWebClient {
+  private config: MessagingInAppWebConfig;
   private logger: Logger;
   private tokenService: TokenService;
   private conversationService: ConversationService;
   private eventService: EventService;
 
   /**
-   * Create a new Salesforce Messaging client
-   * @param {SalesforceMessagingConfig} config config - Configuration parameters from an Embedded Services Deployment Custom Client.
+   * Create a new Messaging In-App and Web client
+   * @param {MessagingInAppWebConfig} config config - Configuration parameters from an Embedded Services Deployment Custom Client.
    */
-  constructor(config: SalesforceMessagingConfig) {
+  constructor(config: MessagingInAppWebConfig) {
     if (!config) {
       throw new Error('Missing client configuration.');
     }
@@ -59,7 +58,7 @@ export class SalesforceMessaging {
     };
 
     this.logger = config.logger || console;
-    this.logger.info(`Salesforce Messaging client initialized.`);
+    this.logger.info(`Messaging In-App and Web client initialized.`);
 
     this.tokenService = new TokenService(
       this.config.baseUrl,
@@ -80,16 +79,12 @@ export class SalesforceMessaging {
     );
   }
 
-  /**
-   * Token-related operations
-   */
+  /** Access token and session management */
   get tokens(): TokenService {
     return this.tokenService;
   }
 
-  /**
-   * Event-related operations
-   */
+  /** Real-time event streaming */
   get events(): {
     stream: (token: string, options: SSEOptions) => EventSourceClient;
   } {
@@ -98,9 +93,7 @@ export class SalesforceMessaging {
     };
   }
   
-  /**
-   * Conversation-related operations
-   */
+  /** Conversation and message management */
   get conversations(): {
     create: (token: string, params?: Record<string, unknown>) => Promise<{id: string}>;
     close: (token: string, conversationId: string) => Promise<{success: boolean}>;
@@ -110,17 +103,17 @@ export class SalesforceMessaging {
       send: (token: string, conversationId: string, params: MessageParams) => Promise<ConversationEntry>;
     };
     typing: {
-      create: (token: string, conversationId: string) => Promise<{success: boolean}>;
-      delete: (token: string, conversationId: string) => Promise<{success: boolean}>;
+      start: (token: string, conversationId: string) => Promise<{success: boolean}>;
+      stop: (token: string, conversationId: string) => Promise<{success: boolean}>;
     };
     receipts: {
-      create: (token: string, conversationId: string, params: ReceiptParams) => Promise<{success: boolean}>;
+      send: (token: string, conversationId: string, params: ReceiptParams) => Promise<{success: boolean}>;
     };
     list: (
       token: string,
       conversationId: string,
       params?: Record<string, unknown>
-    ) => Promise<ConversationEntryResponse>;
+    ) => Promise<ConversationResponse>;
   } {
     return {
       create: (token: string, params = {}) => this.conversationService.create(token, params),
@@ -135,13 +128,13 @@ export class SalesforceMessaging {
           this.conversationService.sendMessage(token, conversationId, params),
       },
       typing: {
-        create: (token: string, conversationId: string) =>
+        start: (token: string, conversationId: string) =>
           this.conversationService.sendTypingIndicator(token, conversationId, true),
-        delete: (token: string, conversationId: string) =>
+        stop: (token: string, conversationId: string) =>
           this.conversationService.sendTypingIndicator(token, conversationId, false),
       },
       receipts: {
-        create: (token: string, conversationId: string, params: ReceiptParams) =>
+        send: (token: string, conversationId: string, params: ReceiptParams) =>
           this.conversationService.sendReceipts(token, conversationId, params),
       },
       list: (token: string, conversationId: string, params = {}) =>
@@ -150,4 +143,4 @@ export class SalesforceMessaging {
   }
 }
 
-export default SalesforceMessaging;
+export default MessagingInAppWebClient;

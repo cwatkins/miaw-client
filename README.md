@@ -1,6 +1,6 @@
-# Salesforce Messaging Client
+# Messaging for In-App and Web Client
 
-A TypeScript client library for Salesforce's Messaging for In-App and Web APIs.
+A TypeScript client library for Salesforce's [Messaging for In-App and Web](https://developer.salesforce.com/docs/service/messaging-api/overview) APIs.
 
 ## Features
 
@@ -15,16 +15,16 @@ A TypeScript client library for Salesforce's Messaging for In-App and Web APIs.
 ## Installation
 
 ```bash
-npm install salesforce-messaging
+npm install @vibestack/miaw-client
 ```
 
 ## Quick Start
 
 ```typescript
-import { SalesforceMessaging } from 'salesforce-messaging';
+import { MessagingInAppWebClient } from '@vibestack/miaw-client';
 
 // Initialize the client
-const client = new SalesforceMessaging({
+const client = new MessagingInAppWebClient({
   baseUrl: 'YOUR_BASE_URL',
   orgId: 'YOUR_ORG_ID',
   developerName: 'YOUR_DEVELOPER_NAME',
@@ -33,18 +33,18 @@ const client = new SalesforceMessaging({
 });
 
 // Create a token
-const { accessToken } = await client.tokens.create({});
+const { accessToken } = await client.tokens.create();
 
 // Create a conversation
 const { id: conversationId } = await client.conversations.create(accessToken);
 
 // Send a message
-const messageEntry = await client.conversations.sendMessage(accessToken, conversationId, {
+const messageEntry = await client.conversations.messages.send(accessToken, conversationId, {
   text: 'Hello, world!',
 });
 
 // Stream conversation events
-const stream = await client.conversations.stream(accessToken, {
+const stream = await client.events.stream(accessToken, {
   lastEventId: '0',
   onEvent: (event) => {
     console.log('Received event:', event);
@@ -65,11 +65,12 @@ if (stream) {
 ### Configuration
 
 ```typescript
-interface SalesforceMessagingConfig {
-  baseUrl: string; // Required: Your Salesforce instance URL
-  orgId: string; // Required: Your Salesforce organization ID
-  developerName: string; // Required: Your developer name
+interface MessagingInAppWebConfig {
+  baseUrl: string; // Required: Custom Client instance URL
+  orgId: string; // Required: Salesforce organization ID
+  developerName: string; // Required: Custom Client developer name
   logger?: Logger; // Optional: Custom logger implementation
+  appName?: string; // Application name (defaults to 'MessagingInAppWebClient')
 }
 ```
 
@@ -85,7 +86,7 @@ interface TokenCreateParams {
   platform?: 'Web' | 'Mobile'; // Platform type (defaults to 'Web')
   deviceId?: string; // Unique device identifier
   context?: {
-    appName: string; // Application name (defaults to 'SalesforceMessagingClient')
+    appName: string; // Application name (defaults to 'MessagingInAppWebClient')
     clientVersion: string; // Client version (defaults to '1.0.0')
   };
   authorizationType?: string; // Required for authenticated sessions
@@ -95,14 +96,6 @@ interface TokenCreateParams {
 const { accessToken, lastEventId } = await client.tokens.create(params);
 ```
 
-#### `continue(token)`
-
-Refreshes an existing access token to maintain an active session.
-
-```typescript
-const { accessToken, lastEventId } = await client.tokens.continue(token);
-```
-
 ### Conversation Service
 
 #### `create(token, params?)`
@@ -110,11 +103,6 @@ const { accessToken, lastEventId } = await client.tokens.continue(token);
 Creates a new conversation with optional routing attributes.
 
 ```typescript
-interface ConversationCreateParams {
-  id?: string; // Optional custom conversation ID
-  routingAttributes?: Record<string, unknown>; // Custom routing parameters
-}
-
 const { id } = await client.conversations.create(token, params);
 ```
 
@@ -149,7 +137,7 @@ interface ConversationStatus {
 const status = await client.conversations.status(token, conversationId);
 ```
 
-#### `sendMessage(token, conversationId, params)`
+#### `messages.send(token, conversationId, params)`
 
 Sends a text message to a conversation.
 
@@ -173,19 +161,21 @@ interface ConversationEntry {
   };
 }
 
-const entry = await client.conversations.sendMessage(token, conversationId, params);
+const entry = await client.conversations.messages.send(token, conversationId, params);
 ```
 
-#### `sendTypingIndicator(token, conversationId, isTyping)`
+#### `typing.create(token, conversationId)` and `typing.delete(token, conversationId)`
 
 Manages typing indicators in a conversation.
 
 ```typescript
-const { success } = await client.conversations.sendTypingIndicator(token, conversationId, true); // Start typing
-const { success } = await client.conversations.sendTypingIndicator(token, conversationId, false); // Stop typing
+// Start typing
+const { success } = await client.conversations.typing.start(token, conversationId);
+// Stop typing
+const { success } = await client.conversations.typing.stop(token, conversationId);
 ```
 
-#### `sendReceipts(token, conversationId, params)`
+#### `receipts.create(token, conversationId, params)`
 
 Sends delivery or read receipts for messages.
 
@@ -198,31 +188,7 @@ interface ReceiptParams {
   }>;
 }
 
-const { success } = await client.conversations.sendReceipts(token, conversationId, params);
-```
-
-#### `stream(token, options?)`
-
-Establishes a Server-Sent Events (SSE) connection for real-time conversation updates.
-
-```typescript
-interface SSEOptions {
-  onEvent: (event: EventSourceMessage) => void; // Callback for handling incoming events
-  lastEventId?: string; // Optional: Resume from a specific event ID
-  onOpen?: () => void; // Optional: Callback for when the connection opens
-  onError?: (error: Event) => void; // Optional: Callback for handling errors
-  onClose?: () => void; // Optional: Callback for when the connection closes
-}
-
-const stream = await client.conversations.stream(token, {
-  lastEventId: '0',
-  onEvent: (event) => {
-    console.log('Received event:', event);
-  },
-  onError: error => {
-    console.error('Stream error:', error);
-  },
-});
+const { success } = await client.conversations.receipts.create(token, conversationId, params);
 ```
 
 #### `list(token, conversationId, params?)`
@@ -241,16 +207,42 @@ interface ConversationEntryListParams {
 const response = await client.conversations.list(token, conversationId, params);
 ```
 
+### Event Service
+
+#### `stream(token, options?)`
+
+Establishes a Server-Sent Events (SSE) connection for real-time conversation updates.
+
+```typescript
+interface SSEOptions {
+  onEvent: (event: EventSourceMessage) => void; // Callback for handling incoming events
+  lastEventId?: string; // Optional: Resume from a specific event ID
+  onOpen?: () => void; // Optional: Callback for when the connection opens
+  onError?: (error: Event) => void; // Optional: Callback for handling errors
+  onClose?: () => void; // Optional: Callback for when the connection closes
+}
+
+const stream = await client.events.stream(token, {
+  lastEventId: '0',
+  onEvent: (event) => {
+    console.log('Received event:', event);
+  },
+  onError: error => {
+    console.error('Stream error:', error);
+  },
+});
+```
+
 ## Forwarding server-sent events
 
-You can integrate the Salesforce Messaging client with frameworks like Fastify to stream conversation events. Below is an example of how to set up a Fastify route for streaming events.
+You can integrate the Messaging client with frameworks like Fastify to stream conversation events. Below is an example of how to set up a Fastify route for streaming events.
 
 ```typescript
 import fastify from 'fastify';
-import { SalesforceMessaging } from 'salesforce-messaging';
+import { MessagingInAppWebClient } from '@vibestack/miaw-client';
 
 const app = fastify();
-const client = new SalesforceMessaging({
+const client = new MessagingInAppWebClient({
   baseUrl: 'YOUR_BASE_URL',
   orgId: 'YOUR_ORG_ID',
   developerName: 'YOUR_DEVELOPER_NAME',
@@ -267,7 +259,7 @@ app.get('/stream/:token', async (request, reply) => {
   reply.header('Connection', 'keep-alive');
 
   // Stream conversation events
-  const stream = await client.conversations.stream(token, {
+  const stream = await client.events.stream(token, {
     onEvent: (ev) => {
       reply.raw.write(
         `event: ${ev.event}\n` + 
@@ -293,8 +285,6 @@ app.get('/stream/:token', async (request, reply) => {
 });
 ```
 
-This example demonstrates how to set up a Fastify route that streams conversation events using the Salesforce Messaging client. Make sure to replace `YOUR_BASE_URL`, `YOUR_ORG_ID`, and `YOUR_DEVELOPER_NAME` with your actual Salesforce configuration values.
-
 ## Development
 
 ### Prerequisites
@@ -314,6 +304,8 @@ This example demonstrates how to set up a Fastify route that streams conversatio
 
 - `npm run build` - Build the project
 - `npm run dev` - Watch mode for development
-- `npm test` - Run tests
+- `npm test` - Run tests (unit and integration)
+- `npm run test:unit` - Run unit tests only
+- `npm run test:integration` - Run integration tests only
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier

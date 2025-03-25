@@ -1,21 +1,21 @@
-/** Extended Error interface for Salesforce API errors */
-export interface SalesforceError extends Error {
+/** Extended Error interface for Messaging In-App and Web API errors */
+export interface MessagingInAppWebError extends Error {
   statusCode: number;
   operation: string;
   type: string;
 }
 
 /**
- * Creates a standardized Salesforce API error object.
+ * Creates a standardized Messaging In-App and Web API error object.
  * @param {number} status - HTTP status code
  * @param {string} operation - Name of the operation that failed
- * @returns {SalesforceError} object with error details
+ * @returns {MessagingInAppWebError} object with error details
  */
 export function createError(
   status: number,
   operation: string
-): SalesforceError {
-  const error = new Error(`Error in ${operation}: ${status}`) as SalesforceError;
+): MessagingInAppWebError {
+  const error = new Error(`Error in ${operation}: ${status}`) as MessagingInAppWebError;
   error.statusCode = status;
   error.operation = operation;
   error.type = getErrorTypeFromStatus(status);

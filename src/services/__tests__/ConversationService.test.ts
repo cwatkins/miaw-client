@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 import { ConversationService } from '../ConversationService.js';
-import type { Logger } from '../../SalesforceMessaging.js';
+import type { Logger } from '../../MessagingInAppWeb.js';
 
 jest.mock('crypto', () => ({
   randomUUID: (): string => 'mock-uuid',
@@ -36,7 +36,7 @@ describe('ConversationService', () => {
       const result = await service.create('test-token');
 
       expect(result).toEqual({ id: 'mock-uuid' });
-      expect(mockFetch).toHaveBeenCalledWith('https://test.com/iamessage/api/v2/conversation', {
+      expect(mockFetch).toHaveBeenCalledWith('https://test.com/iamessage/api/v2/conversation', expect.objectContaining({
         method: 'POST',
         headers: {
           Authorization: 'Bearer test-token',
@@ -46,7 +46,7 @@ describe('ConversationService', () => {
           conversationId: 'mock-uuid',
           esDeveloperName: 'test-dev',
         }),
-      });
+      }));
     });
 
     it('should throw error when creation fails', async () => {
@@ -100,7 +100,7 @@ describe('ConversationService', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test.com/iamessage/api/v2/conversation/conv-id/message',
-        {
+        expect.objectContaining({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ describe('ConversationService', () => {
             },
             esDeveloperName: 'test-dev',
           }),
-        }
+        })
       );
     });
 
@@ -140,10 +140,10 @@ describe('ConversationService', () => {
       expect(result).toEqual({ success: true });
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test.com/iamessage/api/v2/conversation/conv-id?esDeveloperName=test-dev',
-        {
+        expect.objectContaining({
           method: 'DELETE',
           headers: { Authorization: 'Bearer test-token' },
-        }
+        })
       );
     });
   });

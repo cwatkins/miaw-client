@@ -8,9 +8,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      SALESFORCE_BASE_URL: ${{ secrets.SALESFORCE_BASE_URL }}
-      SALESFORCE_ORG_ID: ${{ secrets.SALESFORCE_ORG_ID }}
-      SALESFORCE_DEVELOPER_NAME: ${{ secrets.SALESFORCE_DEVELOPER_NAME }}
+      BASE_URL: ${{ secrets.BASE_URL }}
+      ORG_ID: ${{ secrets.ORG_ID }}
+      DEVELOPER_NAME: ${{ secrets.DEVELOPER_NAME }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3

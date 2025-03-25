@@ -1,5 +1,5 @@
 import { createEventSource, EventSourceClient, EventSourceMessage } from 'eventsource-client';
-import type { Logger } from '../SalesforceMessaging.js';
+import type { Logger } from '../MessagingInAppWeb.js';
 
 export interface SSEOptions {
   /** Optional last event ID to resume connection from a specific point */

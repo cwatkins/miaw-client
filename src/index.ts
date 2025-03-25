@@ -1,2 +1,2 @@
-export { SalesforceMessaging, type Logger } from './SalesforceMessaging.js';
-export { default } from './SalesforceMessaging.js';
+export { MessagingInAppWebClient, type Logger } from './MessagingInAppWeb.js';
+export { default } from './MessagingInAppWeb.js';

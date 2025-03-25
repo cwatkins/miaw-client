@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 import { EventService } from '../EventService.js';
-import type { Logger } from '../../SalesforceMessaging.js';
+import type { Logger } from '../../MessagingInAppWeb.js';
 import { createEventSource } from 'eventsource-client';
 
 jest.mock('eventsource-client', () => ({

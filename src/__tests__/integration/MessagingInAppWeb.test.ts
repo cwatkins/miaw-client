@@ -1,14 +1,15 @@
 /// <reference types="jest" />
 import { config } from 'dotenv';
-import { SalesforceMessaging } from '../../SalesforceMessaging.js';
+import { MessagingInAppWebClient } from '../../MessagingInAppWeb.js';
 import type { AccessTokenResponse, ConversationEntryResponse } from '../../types/api.js';
+import { ConversationResponse } from '../../services/ConversationService.js';
 
 config();
 
 const REQUIRED_ENV_VARS = [
-  'SALESFORCE_BASE_URL',
-  'SALESFORCE_ORG_ID',
-  'SALESFORCE_DEVELOPER_NAME',
+  'BASE_URL',
+  'ORG_ID',
+  'DEVELOPER_NAME',
 ] as const;
 
 REQUIRED_ENV_VARS.forEach(envVar => {
@@ -19,17 +20,17 @@ REQUIRED_ENV_VARS.forEach(envVar => {
 
 const TEST_TIMEOUT = 15000;
 
-describe('SalesforceMessaging Integration', () => {
-  let client: SalesforceMessaging;
+describe('MessagingInAppWebClient Integration', () => {
+  let client: MessagingInAppWebClient;
   let accessToken: string;
   let conversationId: string;
   let lastMessageId: string;
 
   beforeAll(() => {
-    client = new SalesforceMessaging({
-      baseUrl: process.env.SALESFORCE_BASE_URL!,
-      orgId: process.env.SALESFORCE_ORG_ID!,
-      developerName: process.env.SALESFORCE_DEVELOPER_NAME!,
+    client = new MessagingInAppWebClient({
+      baseUrl: process.env.BASE_URL!,
+      orgId: process.env.ORG_ID!,
+      developerName: process.env.DEVELOPER_NAME!,
       logger: console,
     });
   });
@@ -113,7 +114,7 @@ describe('SalesforceMessaging Integration', () => {
       'should send typing indicator',
       async () => {
         expect(conversationId).toBeDefined();
-        const result = (await client.conversations.typing.create(accessToken, conversationId)) as {
+        const result = (await client.conversations.typing.start(accessToken, conversationId)) as {
           success: boolean;
         };
         expect(result.success).toBe(true);
@@ -125,7 +126,7 @@ describe('SalesforceMessaging Integration', () => {
       'should stop typing indicator',
       async () => {
         expect(conversationId).toBeDefined();
-        const result = (await client.conversations.typing.delete(accessToken, conversationId)) as {
+        const result = (await client.conversations.typing.stop(accessToken, conversationId)) as {
           success: boolean;
         };
         expect(result.success).toBe(true);
@@ -139,7 +140,7 @@ describe('SalesforceMessaging Integration', () => {
         expect(conversationId).toBeDefined();
         expect(lastMessageId).toBeDefined();
 
-        const result = (await client.conversations.receipts.create(accessToken, conversationId, {
+        const result = (await client.conversations.receipts.send(accessToken, conversationId, {
           entries: [
             {
               conversationEntryId: lastMessageId,
@@ -161,14 +162,14 @@ describe('SalesforceMessaging Integration', () => {
         const result = (await client.conversations.list(accessToken, conversationId, {
           limit: 10,
           direction: 'FromEnd',
-        })) as ConversationEntryResponse;
+        })) as ConversationResponse;
 
-        expect(Array.isArray(result.conversationEntries)).toBe(true);
-        expect(result.conversationEntries.length).toBeGreaterThan(0);
+        expect(Array.isArray(result.entries)).toBe(true);
+        expect(result.entries.length).toBeGreaterThan(0);
 
-        const lastMessage = result.conversationEntries.find(entry => entry.identifier === lastMessageId);
+        const lastMessage = result.entries.find(entry => entry.id === lastMessageId);
         expect(lastMessage).toBeDefined();
-        expect(lastMessage?.entryType).toBe('Message');
+        expect(lastMessage?.type).toBe('Message');
       },
       TEST_TIMEOUT
     );

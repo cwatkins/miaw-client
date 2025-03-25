@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 import { TokenService } from '../TokenService.js';
-import type { Logger } from '../../SalesforceMessaging.js';
+import type { Logger } from '../../MessagingInAppWeb.js';
 
 describe('TokenService', () => {
   let service: TokenService;
@@ -38,7 +38,7 @@ describe('TokenService', () => {
       expect(result).toEqual(mockResponse);
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test.com/iamessage/api/v2/authorization/unauthenticated/access-token',
-        {
+        expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -47,11 +47,11 @@ describe('TokenService', () => {
             capabilitiesVersion: '1',
             platform: 'Web',
             context: {
-              appName: 'SalesforceMessagingClient',
+              appName: 'MessagingInAppWebClient',
               clientVersion: '1.0.0',
             },
           }),
-        }
+        })
       );
     });
 
@@ -74,7 +74,7 @@ describe('TokenService', () => {
       expect(result).toEqual(mockResponse);
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test.com/iamessage/api/v2/authorization/authenticated/access-token',
-        {
+        expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -83,13 +83,13 @@ describe('TokenService', () => {
             capabilitiesVersion: '1',
             platform: 'Web',
             context: {
-              appName: 'SalesforceMessagingClient',
+              appName: 'MessagingInAppWebClient',
               clientVersion: '1.0.0',
             },
             authorizationType: 'test-auth-type',
             customerIdentityToken: 'test-identity-token',
           }),
-        }
+        })
       );
     });
 
@@ -121,10 +121,10 @@ describe('TokenService', () => {
       expect(result).toEqual(mockResponse);
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test.com/iamessage/api/v2/authorization/continuation-access-token',
-        {
+        expect.objectContaining({
           method: 'GET',
           headers: { Authorization: 'Bearer test-token' },
-        }
+        })
       );
     });
 

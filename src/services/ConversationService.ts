@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import type { Logger } from '../SalesforceMessaging.js';
-import { createError } from '../utils/error.js';
+import type { Logger } from '../MessagingInAppWeb.js';
+import { makeRequest } from '../utils/request.js';
 import type {
   ConversationRoutingStatusResponse,
   ConversationEntryResponse,
@@ -71,7 +71,7 @@ export interface ReceiptParams {
 }
 
 /**
- * Service class for managing conversations with the Salesforce Messaging API.
+ * Service class for managing conversations with the Messaging In-App and Web API.
  * Handles creation, messaging, and management of conversation sessions.
  */
 export class ConversationService {
@@ -92,25 +92,23 @@ export class ConversationService {
     const conversationId = params.id || randomUUID().toLowerCase();
     this.logger.debug(`Creating conversation with ID: ${conversationId}`);
 
-    const response = await fetch(`${this.baseUrl}/iamessage/api/v2/conversation`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+    await makeRequest(
+      `${this.baseUrl}/iamessage/api/v2/conversation`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          conversationId,
+          esDeveloperName: this.developerName,
+          ...(params.routingAttributes ? { routingAttributes: params.routingAttributes } : {}),
+        },
       },
-      body: JSON.stringify({
-        conversationId,
-        esDeveloperName: this.developerName,
-        ...(params.routingAttributes ? { routingAttributes: params.routingAttributes } : {}),
-      }),
-    });
-
-    if (!response.ok) {
-      throw createError(
-        response.status,
-        'conversations.create_conversation'
-      );
-    }
+      'conversations.create_conversation',
+      this.logger
+    );
 
     return { id: conversationId };
   }
@@ -124,20 +122,15 @@ export class ConversationService {
   async close(token: string, conversationId: string): Promise<{ success: boolean }> {
     this.logger.debug(`Closing conversation: ${conversationId}`);
 
-    const response = await fetch(
+    await makeRequest(
       `${this.baseUrl}/iamessage/api/v2/conversation/${conversationId}?esDeveloperName=${this.developerName}`,
       {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
+      'conversations.close_conversation',
+      this.logger
     );
-
-    if (!response.ok) {
-      throw createError(
-        response.status,
-        'conversations.close_conversation'
-      );
-    }
 
     return { success: true };
   }
@@ -151,20 +144,15 @@ export class ConversationService {
   async endSession(token: string, conversationId: string): Promise<{ success: boolean }> {
     this.logger.debug(`Ending session for conversation: ${conversationId}`);
 
-    const response = await fetch(
+    await makeRequest(
       `${this.baseUrl}/iamessage/api/v2/conversation/${conversationId}/session?esDeveloperName=${this.developerName}`,
       {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
+      'conversations.end_conversation_session',
+      this.logger
     );
-
-    if (!response.ok) {
-      throw createError(
-        response.status,
-        'conversations.end_conversation_session'
-      );
-    }
 
     return { success: true };
   }
@@ -178,27 +166,22 @@ export class ConversationService {
   async status(token: string, conversationId: string): Promise<ConversationStatus> {
     this.logger.debug(`Getting status for conversation: ${conversationId}`);
 
-    const response = await fetch(
+    const response = await makeRequest<Response>(
       `${this.baseUrl}/iamessage/api/v2/conversation/${conversationId}`,
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
+      'conversations.retrieve_routing_status',
+      this.logger
     );
-
-    if (!response.ok) {
-      throw createError(
-        response.status,
-        'conversations.retrieve_routing_status'
-      );
-    }
 
     const responseData = (await response.json()) as ConversationRoutingStatusResponse;
     return {
       id: conversationId,
       status: responseData.routingStatus,
-      lastActivityTimestamp: new Date().toISOString(), // Not provided in API response
-      isActive: true, // Not provided in API response
+      lastActivityTimestamp: new Date().toISOString(),
+      isActive: true,
     };
   }
 
@@ -219,7 +202,7 @@ export class ConversationService {
       throw new Error('Message text is required');
     }
 
-    const response = await fetch(
+    const response = await makeRequest<Response>(
       `${this.baseUrl}/iamessage/api/v2/conversation/${conversationId}/message`,
       {
         method: 'POST',
@@ -227,7 +210,7 @@ export class ConversationService {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
+        body: {
           message: {
             id: params.id || randomUUID().toLowerCase(),
             messageType: 'StaticContentMessage',
@@ -240,16 +223,11 @@ export class ConversationService {
           isNewMessagingSession: params.isNewSession,
           ...(params.routingAttributes ? { routingAttributes: params.routingAttributes } : {}),
           ...(params.language ? { language: params.language } : {}),
-        }),
-      }
+        },
+      },
+      'conversations.send_message',
+      this.logger
     );
-
-    if (!response.ok) {
-      throw createError(
-        response.status,
-        'conversations.send_message'
-      );
-    }
 
     const responseData = (await response.json()) as MessageResponse;
     const entry = responseData.conversationEntries[0];
@@ -278,7 +256,7 @@ export class ConversationService {
     conversationId: string,
     isTyping: boolean
   ): Promise<{ success: boolean }> {
-    const response = await fetch(
+    await makeRequest(
       `${this.baseUrl}/iamessage/api/v2/conversation/${conversationId}/entry`,
       {
         method: 'POST',
@@ -286,19 +264,14 @@ export class ConversationService {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
+        body: {
           entryType: isTyping ? 'TypingStartedIndicator' : 'TypingStoppedIndicator',
           id: randomUUID().toLowerCase(),
-        }),
-      }
+        },
+      },
+      'conversations.typing_indicator',
+      this.logger
     );
-
-    if (!response.ok) {
-      throw createError(
-        response.status,
-        'conversations.typing_indicator'
-      );
-    }
 
     return { success: true };
   }
@@ -315,7 +288,7 @@ export class ConversationService {
     conversationId: string,
     params: ReceiptParams
   ): Promise<{ success: boolean }> {
-    const response = await fetch(
+    await makeRequest(
       `${this.baseUrl}/iamessage/api/v2/conversation/${conversationId}/acknowledge-entries`,
       {
         method: 'POST',
@@ -323,22 +296,17 @@ export class ConversationService {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
+        body: {
           acks: params.entries.map(entry => ({
             id: entry.id || randomUUID().toLowerCase(),
             entryType: entry.type || 'Delivery',
             conversationEntryId: entry.conversationEntryId,
           })),
-        }),
-      }
+        },
+      },
+      'conversations.sending_receipts',
+      this.logger
     );
-
-    if (!response.ok) {
-      throw createError(
-        response.status,
-        `conversations.sending_receipts`
-      );
-    }
 
     return { success: true };
   }
@@ -354,7 +322,7 @@ export class ConversationService {
     token: string,
     conversationId: string,
     params: ConversationEntryListParams = {}
-  ): Promise<ConversationEntryResponse> {
+  ): Promise<ConversationResponse> {
     this.logger.debug(`Listing entries for conversation: ${conversationId}`);
 
     const queryParams = new URLSearchParams(
@@ -369,23 +337,38 @@ export class ConversationService {
       )
     );
 
-    const response = await fetch(
+    const response = await makeRequest<Response>(
       `${this.baseUrl}/iamessage/api/v2/conversation/${conversationId}/entries?${queryParams.toString()}`,
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
+      'conversations.list_entries',
+      this.logger
     );
 
-    if (!response.ok) {
-      throw createError(
-        response.status,
-        'conversations.list_entries'
-      );
-    }
-
     const responseData = (await response.json()) as ConversationEntryResponse;
-
-    return responseData;
+    return this.transformListResponse(responseData);
   }
+
+    /**
+   * Transforms a raw conversation entry response into a standardized format
+   * @param {ConversationEntryResponse} response - Raw response from the API
+   * @returns {ConversationResponse} Transformed response
+   */
+    private transformListResponse(response: ConversationEntryResponse): ConversationResponse {
+      return {
+        id: response.conversationEntries[0]?.identifier || '',
+        entries: response.conversationEntries.map(entry => ({
+          id: entry.identifier,
+          type: entry.entryType,
+          text: entry.entryPayload,
+          timestamp: new Date(entry.clientTimestamp).toISOString(),
+          sender: {
+            id: entry.sender.subject,
+            type: entry.sender.role
+          }
+        }))
+      };
+    }
 }
