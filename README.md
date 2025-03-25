@@ -2,6 +2,8 @@
 
 A TypeScript client library for Salesforce's [Messaging for In-App and Web](https://developer.salesforce.com/docs/service/messaging-api/overview) APIs.
 
+This is a personal project and not an official Salesforce product. It is not officially supported by Salesforce.
+
 ## Features
 
 - TypeScript support with full type definitions
