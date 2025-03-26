@@ -5,7 +5,7 @@ import type {
   ConversationRoutingStatusResponse,
   ConversationEntryResponse,
   MessageResponse,
-} from '../types/api.ts';
+} from '../types/api.js';
 
 /** Parameters for creating a new conversation */
 export interface ConversationCreateParams {
@@ -351,24 +351,24 @@ export class ConversationService {
     return this.transformListResponse(responseData);
   }
 
-    /**
+  /**
    * Transforms a raw conversation entry response into a standardized format
    * @param {ConversationEntryResponse} response - Raw response from the API
    * @returns {ConversationResponse} Transformed response
    */
-    private transformListResponse(response: ConversationEntryResponse): ConversationResponse {
-      return {
-        id: response.conversationEntries[0]?.identifier || '',
-        entries: response.conversationEntries.map(entry => ({
-          id: entry.identifier,
-          type: entry.entryType,
-          text: entry.entryPayload,
-          timestamp: new Date(entry.clientTimestamp).toISOString(),
-          sender: {
-            id: entry.sender.subject,
-            type: entry.sender.role
-          }
-        }))
-      };
-    }
+  private transformListResponse(response: ConversationEntryResponse): ConversationResponse {
+    return {
+      id: response.conversationEntries[0]?.identifier || '',
+      entries: response.conversationEntries.map(entry => ({
+        id: entry.identifier,
+        type: entry.entryType,
+        text: entry.entryPayload,
+        timestamp: new Date(entry.clientTimestamp).toISOString(),
+        sender: {
+          id: entry.sender.subject,
+          type: entry.sender.role,
+        },
+      })),
+    };
+  }
 }
