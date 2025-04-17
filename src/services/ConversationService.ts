@@ -1,74 +1,20 @@
 import { randomUUID } from 'crypto';
-import type { Logger } from '../MessagingInAppWeb.js';
-import { makeRequest } from '../utils/request.js';
+import type {
+  Logger,
+  ConversationCreateParams,
+  MessageParams,
+  ConversationEntryListParams,
+  ConversationEntry,
+  ConversationStatus,
+  ConversationResponse,
+  ReceiptParams
+} from '../types';
+import { makeRequest } from '../utils/request';
 import type {
   ConversationRoutingStatusResponse,
   ConversationEntryResponse,
   MessageResponse,
-} from '../types/api.js';
-
-/** Parameters for creating a new conversation */
-export interface ConversationCreateParams {
-  id?: string;
-  routingAttributes?: Record<string, unknown>;
-}
-
-/** Parameters for sending a message in a conversation */
-export interface MessageParams {
-  text: string;
-  id?: string;
-  isNewSession?: boolean;
-  routingAttributes?: Record<string, unknown>;
-  language?: string;
-}
-
-/** Parameters for listing conversation entries */
-export interface ConversationEntryListParams {
-  limit?: number;
-  startTimestamp?: string;
-  endTimestamp?: string;
-  direction?: 'FromEnd' | 'FromStart';
-  entryTypeFilter?: string[];
-}
-
-/** Represents a single entry in a conversation */
-export interface ConversationEntry {
-  id: string;
-  type: string;
-  text?: string;
-  timestamp: string;
-  sender: {
-    id: string;
-    type: string;
-  };
-  routingAttributes?: Record<string, unknown>;
-}
-
-/** Represents the current status of a conversation */
-export interface ConversationStatus {
-  id: string;
-  status: string;
-  lastActivityTimestamp: string;
-  isActive: boolean;
-}
-
-/** Response structure for conversation data */
-export interface ConversationResponse {
-  id: string;
-  entries: ConversationEntry[];
-}
-
-/** Represents a receipt entry for message delivery/read status */
-export interface ReceiptEntry {
-  id?: string;
-  type?: 'Delivery' | 'Read';
-  conversationEntryId: string;
-}
-
-/** Parameters for sending message receipts */
-export interface ReceiptParams {
-  entries: ReceiptEntry[];
-}
+} from '../types/api';
 
 /**
  * Service class for managing conversations with the Messaging In-App and Web API.

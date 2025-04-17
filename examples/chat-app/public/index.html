@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIAW Chat</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .chat-container {
+            position: relative;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: white;
+        }
+        .message {
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+            margin: 0;
+            line-height: 1.4;
+            font-size: 16px;
+        }
+        .message.sent {
+            background-color: #4285f4;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .message.received {
+            background-color: #e9ecef;
+            color: black;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .message.received.bot {
+            background-color: #4285f4;
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .message.system {
+            background-color: transparent;
+            color: #6c757d;
+            text-align: center;
+            align-self: center;
+            font-style: italic;
+            font-size: 0.9em;
+            padding: 4px 12px;
+        }
+        .message.agent-join {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            text-align: center;
+            align-self: center;
+            font-size: 16px;
+            padding: 12px 24px;
+            border-radius: 6px;
+            border: 1px solid #bbdefb;
+            margin: 8px 0;
+        }
+        .status {
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            border-radius: 4px;
+            background-color: #d4edda;
+            color: #155724;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-text {
+            flex: 1;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status.ended {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status.ended .close-button {
+            display: none;
+        }
+        .close-button {
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .close-button:hover {
+            background-color: #c82333;
+        }
+        .close-button.start-chat {
+            background-color: #4285f4;
+        }
+        .close-button.start-chat:hover {
+            background-color: #3367d6;
+        }
+        .close-button:disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            border: 1px dashed #6c757d;
+            opacity: 0.7;
+        }
+        .close-button.start-chat:disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            border: 1px dashed #6c757d;
+            opacity: 0.7;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            padding: 16px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            background-color: white;
+            color: #495057;
+        }
+        input[type="text"]:disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        input[type="text"]::placeholder {
+            color: #6c757d;
+        }
+        button#sendButton {
+            padding: 12px 32px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        button#sendButton:hover {
+            background-color: #3367d6;
+        }
+        button#sendButton:disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="status" id="status">
+            <div class="status-text">Connecting...</div>
+            <button class="close-button" id="closeButton">End Chat</button>
+        </div>
+        <div class="messages" id="messages"></div>
+        <div class="input-container">
+            <input type="text" id="messageInput" placeholder="Type your message..." disabled>
+            <button id="sendButton" disabled>Send</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html> 

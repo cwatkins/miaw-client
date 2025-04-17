@@ -1,2 +1,3 @@
-export { MessagingInAppWebClient, type Logger } from './MessagingInAppWeb.js';
-export { default } from './MessagingInAppWeb.js';
+export { MessagingInAppWebClient } from './MessagingInAppWeb';
+export { type Logger } from './types';
+export { default } from './MessagingInAppWeb';

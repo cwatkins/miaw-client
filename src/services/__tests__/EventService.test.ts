@@ -1,17 +1,19 @@
 /// <reference types="jest" />
-import { EventService } from '../EventService.js';
-import type { Logger } from '../../MessagingInAppWeb.js';
-import { createEventSource } from 'eventsource-client';
+import { jest } from '@jest/globals';
+import type { Logger } from '../../types.js';
 
-jest.mock('eventsource-client', () => ({
-  createEventSource: jest.fn(),
+const mockCreateEventSource = jest.fn();
+jest.unstable_mockModule('eventsource-client', () => ({
+  createEventSource: mockCreateEventSource,
 }));
 
+const { EventService } = await import('../EventService.js');
+
 describe('EventService', () => {
-  let service: EventService;
+  let service: InstanceType<typeof EventService>;
   let mockLogger: Logger;
 
-  beforeEach((): void => {
+  beforeEach(() => {
     mockLogger = {
       error: jest.fn(),
       warn: jest.fn(),
@@ -27,7 +29,7 @@ describe('EventService', () => {
       const mockEventSource = {
         close: jest.fn(),
       };
-      (createEventSource as jest.Mock).mockReturnValue(mockEventSource);
+      mockCreateEventSource.mockReturnValue(mockEventSource);
 
       const options = {
         onEvent: jest.fn(),
@@ -39,7 +41,7 @@ describe('EventService', () => {
 
       const result = service.createEventSourceStream('test-token', options);
 
-      expect(createEventSource).toHaveBeenCalledWith({
+      expect(mockCreateEventSource).toHaveBeenCalledWith({
         url: 'https://test.com/eventrouter/v1/sse',
         headers: {
           Accept: 'text/event-stream',
@@ -69,7 +71,7 @@ describe('EventService', () => {
         close: jest.fn(),
       };
       let savedConfig: any;
-      (createEventSource as jest.Mock).mockImplementation(config => {
+      mockCreateEventSource.mockImplementation(config => {
         savedConfig = config;
         return mockEventSource;
       });

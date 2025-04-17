@@ -1,24 +1,5 @@
-import type { Logger } from '../MessagingInAppWeb.js';
-import { makeRequest } from '../utils/request.js';
-
-/** Parameters for creating a new token */
-export interface TokenCreateParams {
-  capabilitiesVersion?: string;
-  platform?: 'Web' | 'Mobile';
-  deviceId?: string;
-  context?: {
-    appName: string;
-    clientVersion: string;
-  };
-  authorizationType?: string;
-  customerIdentityToken?: string;
-}
-
-/** Response structure for token operations */
-export interface TokenResponse {
-  accessToken: string;
-  lastEventId: string;
-}
+import type { Logger, TokenCreateParams, TokenResponse } from '../types';
+import { makeRequest } from '../utils/request';
 
 /**
  * Service class for managing authentication tokens with the Messaging In-App and Web API.

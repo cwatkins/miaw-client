@@ -1,15 +1,17 @@
 /// <reference types="jest" />
+import { jest } from '@jest/globals';
 import { TokenService } from '../TokenService.js';
-import type { Logger } from '../../MessagingInAppWeb.js';
+import type { Logger } from '../../types.js';
+import type { MockResponse, MockFetch } from './types.js';
 
 describe('TokenService', () => {
   let service: TokenService;
-  let mockFetch: jest.Mock;
+  let mockFetch: MockFetch;
   let mockLogger: Logger;
 
   beforeEach(() => {
-    mockFetch = jest.fn();
-    global.fetch = mockFetch;
+    mockFetch = jest.fn() as unknown as MockFetch;
+    global.fetch = mockFetch as unknown as typeof fetch;
 
     mockLogger = {
       error: jest.fn(),
@@ -23,19 +25,37 @@ describe('TokenService', () => {
 
   describe('create', () => {
     it('should create an unauthenticated token successfully', async () => {
-      const mockResponse = {
-        accessToken: 'mock-token',
-        lastEventId: 'mock-event-id',
+      const mockResponse: MockResponse<{ accessToken: string; lastEventId: string }> = {
+        ok: true,
+        json: () => Promise.resolve({
+          accessToken: 'mock-token',
+          lastEventId: 'mock-event-id',
+        }),
+        text: () => Promise.resolve(JSON.stringify({
+          accessToken: 'mock-token',
+          lastEventId: 'mock-event-id',
+        })),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+        statusText: 'OK',
+        type: 'default',
+        url: 'https://test.com/iamessage/api/v2/authorization/unauthenticated/access-token',
+        redirected: false,
+        clone: () => mockResponse as unknown as Response,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        blob: () => Promise.resolve(new Blob()),
+        formData: () => Promise.resolve(new FormData()),
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockResponse),
-      });
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const result = await service.create({});
 
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual({
+        accessToken: 'mock-token',
+        lastEventId: 'mock-event-id',
+      });
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test.com/iamessage/api/v2/authorization/unauthenticated/access-token',
         expect.objectContaining({
@@ -56,22 +76,40 @@ describe('TokenService', () => {
     });
 
     it('should create an authenticated token successfully', async () => {
-      const mockResponse = {
-        accessToken: 'mock-token',
-        lastEventId: 'mock-event-id',
+      const mockResponse: MockResponse<{ accessToken: string; lastEventId: string }> = {
+        ok: true,
+        json: () => Promise.resolve({
+          accessToken: 'mock-token',
+          lastEventId: 'mock-event-id',
+        }),
+        text: () => Promise.resolve(JSON.stringify({
+          accessToken: 'mock-token',
+          lastEventId: 'mock-event-id',
+        })),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+        statusText: 'OK',
+        type: 'default',
+        url: 'https://test.com/iamessage/api/v2/authorization/authenticated/access-token',
+        redirected: false,
+        clone: () => mockResponse as unknown as Response,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        blob: () => Promise.resolve(new Blob()),
+        formData: () => Promise.resolve(new FormData()),
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockResponse),
-      });
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const result = await service.create({
-        authorizationType: 'test-auth-type',
-        customerIdentityToken: 'test-identity-token',
+        authorizationType: 'Bearer',
+        customerIdentityToken: 'customer-token',
       });
 
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual({
+        accessToken: 'mock-token',
+        lastEventId: 'mock-event-id',
+      });
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test.com/iamessage/api/v2/authorization/authenticated/access-token',
         expect.objectContaining({
@@ -86,19 +124,32 @@ describe('TokenService', () => {
               appName: 'MessagingInAppWebClient',
               clientVersion: '1.0.0',
             },
-            authorizationType: 'test-auth-type',
-            customerIdentityToken: 'test-identity-token',
+            authorizationType: 'Bearer',
+            customerIdentityToken: 'customer-token',
           }),
         })
       );
     });
 
     it('should throw error when token creation fails', async () => {
-      mockFetch.mockResolvedValueOnce({
+      const mockResponse: MockResponse<{ message: string }> = {
         ok: false,
-        status: 400,
-        json: () => Promise.resolve({ message: 'Bad Request' }),
-      });
+        json: () => Promise.reject(new Error('Bad Request')),
+        text: () => Promise.reject(new Error('Bad Request')),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+        statusText: 'Bad Request',
+        type: 'error',
+        url: 'https://test.com/iamessage/api/v2/authorization/unauthenticated/access-token',
+        redirected: false,
+        clone: () => mockResponse as unknown as Response,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: () => Promise.reject(new Error('Bad Request')),
+        blob: () => Promise.reject(new Error('Bad Request')),
+        formData: () => Promise.reject(new Error('Bad Request')),
+      };
+
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       await expect(service.create({})).rejects.toThrow();
     });
@@ -106,36 +157,67 @@ describe('TokenService', () => {
 
   describe('continue', () => {
     it('should refresh token successfully', async () => {
-      const mockResponse = {
-        accessToken: 'new-mock-token',
-        lastEventId: 'new-mock-event-id',
+      const mockResponse: MockResponse<{ accessToken: string; lastEventId: string }> = {
+        ok: true,
+        json: () => Promise.resolve({
+          accessToken: 'new-mock-token',
+          lastEventId: 'new-mock-event-id',
+        }),
+        text: () => Promise.resolve(JSON.stringify({
+          accessToken: 'new-mock-token',
+          lastEventId: 'new-mock-event-id',
+        })),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+        statusText: 'OK',
+        type: 'default',
+        url: 'https://test.com/iamessage/api/v2/authorization/continuation-access-token',
+        redirected: false,
+        clone: () => mockResponse as unknown as Response,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        blob: () => Promise.resolve(new Blob()),
+        formData: () => Promise.resolve(new FormData()),
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockResponse),
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      const result = await service.continue('old-token');
+
+      expect(result).toEqual({
+        accessToken: 'new-mock-token',
+        lastEventId: 'new-mock-event-id',
       });
-
-      const result = await service.continue('test-token');
-
-      expect(result).toEqual(mockResponse);
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test.com/iamessage/api/v2/authorization/continuation-access-token',
         expect.objectContaining({
           method: 'GET',
-          headers: { Authorization: 'Bearer test-token' },
+          headers: { Authorization: 'Bearer old-token' },
         })
       );
     });
 
     it('should throw error when token refresh fails', async () => {
-      mockFetch.mockResolvedValueOnce({
+      const mockResponse: MockResponse<{ message: string }> = {
         ok: false,
-        status: 401,
-        json: () => Promise.resolve({ message: 'Unauthorized' }),
-      });
+        json: () => Promise.reject(new Error('Unauthorized')),
+        text: () => Promise.reject(new Error('Unauthorized')),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+        statusText: 'Unauthorized',
+        type: 'error',
+        url: 'https://test.com/iamessage/api/v2/authorization/continuation-access-token',
+        redirected: false,
+        clone: () => mockResponse as unknown as Response,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: () => Promise.reject(new Error('Unauthorized')),
+        blob: () => Promise.reject(new Error('Unauthorized')),
+        formData: () => Promise.reject(new Error('Unauthorized')),
+      };
 
-      await expect(service.continue('test-token')).rejects.toThrow();
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      await expect(service.continue('old-token')).rejects.toThrow();
     });
   });
 });

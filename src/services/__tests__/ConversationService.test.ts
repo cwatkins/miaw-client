@@ -1,19 +1,23 @@
 /// <reference types="jest" />
-import { ConversationService } from '../ConversationService.js';
-import type { Logger } from '../../MessagingInAppWeb.js';
+import { jest } from '@jest/globals';
+import type { Logger } from '../../types.js';
+import type { MockResponse, MockFetch } from './types.js';
 
-jest.mock('crypto', () => ({
-  randomUUID: (): string => 'mock-uuid',
+const mockUUID = 'mock-uuid';
+jest.unstable_mockModule('crypto', () => ({
+  randomUUID: () => mockUUID,
 }));
 
+const { ConversationService } = await import('../ConversationService.js');
+
 describe('ConversationService', () => {
-  let service: ConversationService;
-  let mockFetch: jest.Mock;
+  let service: InstanceType<typeof ConversationService>;
+  let mockFetch: MockFetch;
   let mockLogger: Logger;
 
-  beforeEach((): void => {
-    mockFetch = jest.fn();
-    global.fetch = mockFetch;
+  beforeEach(() => {
+    mockFetch = jest.fn() as unknown as MockFetch;
+    global.fetch = mockFetch as unknown as typeof fetch;
 
     mockLogger = {
       error: jest.fn(),
@@ -27,11 +31,23 @@ describe('ConversationService', () => {
 
   describe('create', () => {
     it('should create a conversation successfully', async () => {
-      mockFetch.mockResolvedValueOnce({
+      const mockResponse: MockResponse<{ conversationId: string }> = {
         ok: true,
         json: () => Promise.resolve({ conversationId: 'mock-uuid' }),
         text: () => Promise.resolve(JSON.stringify({ conversationId: 'mock-uuid' })),
-      });
+        headers: new Headers(),
+        statusText: 'OK',
+        type: 'default',
+        url: 'https://test.com/iamessage/api/v2/conversation',
+        redirected: false,
+        clone: () => mockResponse as unknown as Response,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        blob: () => Promise.resolve(new Blob()),
+        formData: () => Promise.resolve(new FormData()),
+      };
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const result = await service.create('test-token');
 
@@ -50,11 +66,24 @@ describe('ConversationService', () => {
     });
 
     it('should throw error when creation fails', async () => {
-      mockFetch.mockResolvedValueOnce({
+      const mockResponse: MockResponse<{ message: string }> = {
         ok: false,
         status: 400,
         json: () => Promise.resolve({ message: 'Bad Request' }),
-      });
+        text: () => Promise.resolve(JSON.stringify({ message: 'Bad Request' })),
+        headers: new Headers(),
+        statusText: 'Bad Request',
+        type: 'default',
+        url: 'https://test.com/iamessage/api/v2/conversation',
+        redirected: false,
+        clone: () => mockResponse as unknown as Response,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        blob: () => Promise.resolve(new Blob()),
+        formData: () => Promise.resolve(new FormData()),
+      };
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       await expect(service.create('test-token')).rejects.toThrow();
     });
@@ -62,16 +91,25 @@ describe('ConversationService', () => {
 
   describe('sendMessage', () => {
     it('should send a message successfully', async () => {
-      mockFetch.mockResolvedValueOnce({
+      const mockResponse: MockResponse<{
+        conversationEntries: Array<{
+          id: string;
+          clientTimestamp: string;
+          sender: {
+            subject: string;
+            role: string;
+          };
+        }>;
+      }> = {
         ok: true,
         json: () =>
           Promise.resolve({
             conversationEntries: [
               {
                 id: 'mock-uuid',
-                clientTimestamp: new Date().toISOString(),
+                clientTimestamp: '2024-01-01T00:00:00Z',
                 sender: {
-                  subject: 'user-id',
+                  subject: 'test',
                   role: 'user',
                 },
               },
@@ -83,16 +121,28 @@ describe('ConversationService', () => {
               conversationEntries: [
                 {
                   id: 'mock-uuid',
-                  clientTimestamp: new Date().toISOString(),
+                  clientTimestamp: '2024-01-01T00:00:00Z',
                   sender: {
-                    subject: 'user-id',
+                    subject: 'test',
                     role: 'user',
                   },
                 },
               ],
             })
           ),
-      });
+        headers: new Headers(),
+        statusText: 'OK',
+        type: 'default',
+        url: 'https://test.com/iamessage/api/v2/conversation/mock-uuid/entries',
+        redirected: false,
+        clone: () => mockResponse as unknown as Response,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        blob: () => Promise.resolve(new Blob()),
+        formData: () => Promise.resolve(new FormData()),
+      };
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       await service.sendMessage('test-token', 'conv-id', {
         text: 'Hello world',
@@ -130,10 +180,23 @@ describe('ConversationService', () => {
 
   describe('close', () => {
     it('should close a conversation successfully', async () => {
-      mockFetch.mockResolvedValueOnce({
+      const mockResponse: MockResponse<{ success: boolean }> = {
         ok: true,
         json: () => Promise.resolve({ success: true }),
-      });
+        text: () => Promise.resolve(JSON.stringify({ success: true })),
+        headers: new Headers(),
+        statusText: 'OK',
+        type: 'default',
+        url: 'https://test.com/iamessage/api/v2/conversation/mock-uuid/entries',
+        redirected: false,
+        clone: () => mockResponse as unknown as Response,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        blob: () => Promise.resolve(new Blob()),
+        formData: () => Promise.resolve(new FormData()),
+      };
+      mockFetch.mockResolvedValueOnce(mockResponse);
 
       const result = await service.close('test-token', 'conv-id');
 

@@ -1,5 +1,5 @@
-import { createError } from './error.js';
-import { Logger } from '../MessagingInAppWeb.js';
+import { createError } from './error';
+import { Logger } from '../types';
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 interface RequestOptions {
@@ -15,7 +15,7 @@ interface TimeoutError extends Error {
 }
 
 /**
- * Makes an HTTP request with optional timeout
+ * Makes an HTTP request with optional timeout.
  * @param url URL to fetch
  * @param options Request options including timeout
  * @param logger Logger instance

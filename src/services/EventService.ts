@@ -1,14 +1,5 @@
-import { createEventSource, EventSourceClient, EventSourceMessage } from 'eventsource-client';
-import type { Logger } from '../MessagingInAppWeb.js';
-
-export interface SSEOptions {
-  /** Optional last event ID to resume connection from a specific point */
-  lastEventId?: string;
-  onEvent: (event: EventSourceMessage) => void;
-  onOpen?: () => void;
-  onError?: (error: Event) => void;
-  onClose?: () => void;
-}
+import { createEventSource, EventSourceClient } from 'eventsource-client';
+import type { Logger, SSEOptions } from '../types';
 
 /**
  * Service class for managing Server-Sent Events (SSE) connections.

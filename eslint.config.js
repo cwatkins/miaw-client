@@ -7,13 +7,14 @@ export default [
   eslint.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx'],
+    ignores: ['**/*.d.ts'],
     plugins: {
       '@typescript-eslint': tseslint
     },
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: ['./tsconfig.json', './tsconfig.test.json'],
         ecmaVersion: 2021,
         sourceType: 'module'
       },
@@ -34,6 +35,24 @@ export default [
       '@typescript-eslint/no-unsafe-return': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { 'argsIgnorePattern': '^_' }]
+    }
+  },
+  {
+    files: ['**/*.d.ts'],
+    plugins: {
+      '@typescript-eslint': tseslint
+    },
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2021,
+        sourceType: 'module'
+      }
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off'
     }
   },
   {
