@@ -1,7 +1,7 @@
 import fastify from 'fastify';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { MessagingInAppWebClient } from '@vibestack/miaw-client';
+import { MessagingInAppWebClient } from 'miaw-client';
 import dotenv from 'dotenv';
 import fastifyStatic from '@fastify/static';
 

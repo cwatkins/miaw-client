@@ -29,19 +29,19 @@ brew install pnpm
 Then install the package:
 
 ```bash
-pnpm add @vibestack/miaw-client
+pnpm add miaw-client
 ```
 
 Or using npm:
 
 ```bash
-npm install @vibestack/miaw-client
+npm install miaw-client
 ```
 
 ## Quick Start
 
 ```typescript
-import { MessagingInAppWebClient } from '@vibestack/miaw-client';
+import { MessagingInAppWebClient } from 'miaw-client';
 
 // Initialize the client
 const client = new MessagingInAppWebClient({
