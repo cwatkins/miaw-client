@@ -183,5 +183,3 @@ interface ConversationEntry {
 
 const entry = await client.conversations.messages.send(token, conversationId, params);
 ```
-
-#### `
