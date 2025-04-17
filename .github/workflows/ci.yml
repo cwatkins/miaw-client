@@ -2,8 +2,26 @@ name: CI
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'tsconfig*.json'
+      - 'tsup.config.ts'
+      - 'jest.config.cjs'
+      - '.eslintrc'
+      - 'eslint.config.js'
   pull_request:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'tsconfig*.json'
+      - 'tsup.config.ts'
+      - 'jest.config.cjs'
+      - '.eslintrc'
+      - 'eslint.config.js'
 
 jobs:
   lint:
