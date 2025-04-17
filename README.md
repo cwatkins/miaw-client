@@ -16,6 +16,24 @@ This is a personal project and not an official Salesforce product. It is not off
 
 ## Installation
 
+This project uses [pnpm](https://pnpm.io/) as its package manager. You can install it using:
+
+```bash
+# Using npm
+npm install -g pnpm
+
+# Using Homebrew
+brew install pnpm
+```
+
+Then install the package:
+
+```bash
+pnpm add @vibestack/miaw-client
+```
+
+Or using npm:
+
 ```bash
 npm install @vibestack/miaw-client
 ```
@@ -166,148 +184,4 @@ interface ConversationEntry {
 const entry = await client.conversations.messages.send(token, conversationId, params);
 ```
 
-#### `typing.start(token, conversationId)` and `typing.stop(token, conversationId)`
-
-Manages typing indicators in a conversation.
-
-```typescript
-// Start typing
-const { success } = await client.conversations.typing.start(token, conversationId);
-// Stop typing
-const { success } = await client.conversations.typing.stop(token, conversationId);
-```
-
-#### `receipts.send(token, conversationId, params)`
-
-Sends delivery or read receipts for messages.
-
-```typescript
-interface ReceiptParams {
-  entries: Array<{
-    id?: string; // Optional: Custom receipt ID
-    type?: 'Delivery' | 'Read'; // Receipt type (defaults to 'Delivery')
-    conversationEntryId: string; // ID of the message being acknowledged
-  }>;
-}
-
-const { success } = await client.conversations.receipts.send(token, conversationId, params);
-```
-
-#### `list(token, conversationId, params?)`
-
-Lists conversation entries with optional filtering parameters.
-
-```typescript
-interface ConversationEntryListParams {
-  limit?: number;
-  startTimestamp?: string;
-  endTimestamp?: string;
-  direction?: 'FromEnd' | 'FromStart';
-  entryTypeFilter?: string[];
-}
-
-const response = await client.conversations.list(token, conversationId, params);
-```
-
-### Event Service
-
-#### `stream(token, options?)`
-
-Establishes a Server-Sent Events (SSE) connection for real-time conversation updates.
-
-```typescript
-interface SSEOptions {
-  onEvent: (event: EventSourceMessage) => void; // Callback for handling incoming events
-  lastEventId?: string; // Optional: Resume from a specific event ID
-  onOpen?: () => void; // Optional: Callback for when the connection opens
-  onError?: (error: Event) => void; // Optional: Callback for handling errors
-  onClose?: () => void; // Optional: Callback for when the connection closes
-}
-
-const stream = await client.events.stream(token, {
-  lastEventId: '0',
-  onEvent: (event) => {
-    console.log('Received event:', event);
-  },
-  onError: error => {
-    console.error('Stream error:', error);
-  },
-});
-```
-
-## Forwarding server-sent events
-
-You can integrate the Messaging client with frameworks like Fastify to stream conversation events. Below is an example of how to set up a Fastify route for streaming events.
-
-```typescript
-import fastify from 'fastify';
-import { MessagingInAppWebClient } from '@vibestack/miaw-client';
-
-const app = fastify();
-const client = new MessagingInAppWebClient({
-  baseUrl: 'YOUR_BASE_URL',
-  orgId: 'YOUR_ORG_ID',
-  developerName: 'YOUR_DEVELOPER_NAME',
-  logger: console,
-});
-
-// Fastify route for streaming conversation events
-app.get('/stream/:token', async (request, reply) => {
-  const { token } = request.params;
-
-  // Set headers for SSE
-  reply.header('Content-Type', 'text/event-stream');
-  reply.header('Cache-Control', 'no-cache');
-  reply.header('Connection', 'keep-alive');
-
-  // Stream conversation events
-  const stream = await client.events.stream(token, {
-    onEvent: (ev) => {
-      reply.raw.write(
-        `event: ${ev.event}\n` + 
-        `data: ${JSON.stringify(ev.data)}\n\n`
-      );
-    },
-    onError: (error) => {
-      console.error('Stream error:', error);
-    },
-    onOpen: () => {
-      console.log('Stream opened');
-    },
-    onClose: () => {
-      console.log('Stream closed');
-      reply.raw.end();
-    },
-  });
-
-  // Clean up when the connection is closed
-  request.raw.on('close', () => {
-    stream.close();
-  });
-});
-```
-
-## Development
-
-### Prerequisites
-
-- Node.js >= 18.0.0
-- npm
-
-### Setup
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-### Available Scripts
-
-- `npm run build` - Build the project
-- `npm run dev` - Watch mode for development
-- `npm test` - Run tests (unit and integration)
-- `npm run test:unit` - Run unit tests only
-- `npm run test:integration` - Run integration tests only
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code with Prettier
+#### `
