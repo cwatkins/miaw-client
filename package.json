@@ -42,7 +42,7 @@
     "real-time"
   ],
   "author": "cwatkins",
-  "license": "ISC",
+  "license": "CC0-1.0",
   "engines": {
     "node": ">=18.0.0"
   },
