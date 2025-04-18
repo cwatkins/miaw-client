@@ -41,7 +41,7 @@
     "sse",
     "real-time"
   ],
-  "author": "Charles Watkins",
+  "author": "cwatkins",
   "license": "ISC",
   "engines": {
     "node": ">=18.0.0"
